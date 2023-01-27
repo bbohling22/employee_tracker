@@ -75,20 +75,32 @@ function startPrompt() {
 }
 
 function viewAllEmployees() {
-  dbConnection.query(
-    `SELECT employees.id AS 'id' 
-    employees.first_name AS 'First Name'
-    employees.last_name AS 'Last Name'
-    employees.role_id AS 'Role ID'
-    employees.manager_id AS 'Manager'`,
-    function (err, results) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.table("\n Here are all the employees in the company:", results);
+  let sqlCommand = `SELECT employee.id AS "Employee ID",
+  employee.first_name AS "First Name",
+  employee.last_name AS "Last Name",
+  role.title AS "Job Title",
+  dept.name AS "Department",
+  role.salary AS "Salary",
+  CONCAT(man.first_name," ", man.last_name) AS "Manager"
+  FROM employees AS employee
+  LEFT JOIN roles AS role
+      ON employee.role_id=role.id
+  LEFT JOIN departments AS dept
+      ON role.department_id=dept.id
+  LEFT JOIN employees AS man
+      ON man.id=employee.manager_id
+  GROUP BY employee.id`;
+  dbConnection.query(sqlCommand,
+   function (err, results){
+      if(err){
+          console.log(err);
+          startPrompt();
       }
-    }
-  );
+          console.table('\n Here are all the employees in the company:', results); 
+          console.table("What would you like to do now")
+          startPrompt();
+
+  })
 }
 
 function addNewEmployee() {
@@ -295,9 +307,6 @@ function showAllRoles() {
       console.table("\n Here are all the roles in the company:", results);
       startPrompt();
     }
-
-    console.table(res);
-    startPrompt();
   });
 }
 
@@ -348,6 +357,7 @@ function addNewRole() {
                   console.log(error);
                 } else {
                   console.log(`\n Added new role named ${newRole[0]} \n`);
+                  startPrompt();
                 }
               });
             });
